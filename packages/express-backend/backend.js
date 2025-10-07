@@ -1,5 +1,6 @@
 // backend.js
 import express from "express";
+import cors from "cors";
 
 const app = express();
 const port = 8000;
@@ -64,6 +65,7 @@ const findUserByNameAndJob = (name, job) => {
   );
 };
 
+app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -71,7 +73,8 @@ app.get("/", (req, res) => {
 });
 
 app.get("/users", (req, res) => {
-  const { name, job } = req.query;
+  const name = req.query.name;
+  const job = req.query.job;
 
   let result;
 

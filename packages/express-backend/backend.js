@@ -65,6 +65,23 @@ const findUserByNameAndJob = (name, job) => {
   );
 };
 
+const generateID = () => {
+  const letters = "abcdefghijklmnopqrstuvwxyz";
+  const digits = "0123456789";
+
+  let idLetters = "";
+  for (let i = 0; i < 3; i++) {
+    idLetters += letters.charAt(Math.floor(Math.random() * letters.length));
+  }
+
+  let idNumbers = "";
+  for (let i = 0; i < 3; i++) {
+    idNumbers += digits.charAt(Math.floor(Math.random() * digits.length));
+  }
+
+  return idLetters + idNumbers;
+};
+
 app.use(cors());
 app.use(express.json());
 
@@ -101,8 +118,15 @@ app.get("/users/:id", (req, res) => {
 
 app.post("/users", (req, res) => {
   const userToAdd = req.body;
-  addUser(userToAdd);
-  res.send();
+  const newID = generateID();
+  const userWithID = {
+    id: newID,
+    name: userToAdd.name,
+    job: userToAdd.job
+  };
+  
+  addUser(userWithID);
+  res.status(201).send(userToAdd);
 });
 
 app.delete("/users/:id", (req, res) => {

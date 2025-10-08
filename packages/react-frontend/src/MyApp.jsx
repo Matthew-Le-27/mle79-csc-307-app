@@ -6,13 +6,6 @@ import Form from "./Form";
 function MyApp() {
   const [characters, setCharacters] = useState([]);
 
-  // function removeOneCharacter(index) {
-  //   const updated = characters.filter((character, i) => {
-  //     return i !== index;
-  //   });
-  //   setCharacters(updated);
-  // }
-
   function removeOneCharacter(id) {
     const promise = fetch(`http://localhost:8000/users/${id}`, {
       method: "DELETE",

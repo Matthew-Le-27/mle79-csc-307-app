@@ -126,7 +126,7 @@ app.post("/users", (req, res) => {
   };
   
   addUser(userWithID);
-  res.status(201).send(userToAdd);
+  res.status(201).send(userWithID);
 });
 
 app.delete("/users/:id", (req, res) => {
@@ -134,9 +134,9 @@ app.delete("/users/:id", (req, res) => {
   const removedUser = deleteUser(id);
 
   if (removedUser === null) {
-    res.status(404).send("Resource not found.");
+    res.status(404).send("Resource not found."); 
   } else {
-    res.send(removedUser)
+    res.status(204).send(); 
   }
 });
 

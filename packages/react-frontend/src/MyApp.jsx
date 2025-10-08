@@ -6,22 +6,46 @@ import Form from "./Form";
 function MyApp() {
   const [characters, setCharacters] = useState([]);
 
-  function removeOneCharacter(index) {
-    const updated = characters.filter((character, i) => {
-      return i !== index;
+  // function removeOneCharacter(index) {
+  //   const updated = characters.filter((character, i) => {
+  //     return i !== index;
+  //   });
+  //   setCharacters(updated);
+  // }
+
+  function removeOneCharacter(id) {
+    const promise = fetch(`http://localhost:8000/users/${id}`, {
+      method: "DELETE",
     });
-    setCharacters(updated);
+
+    return promise
+      .then((response) => {
+        if (response.status === 204) {
+          const updated = characters.filter((character) => character.id !== id);
+          setCharacters(updated);
+        } else {
+          console.error(response.status);
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   }
 
   function updateList(person) { 
     postUser(person)
       .then((response) => {
         if (response.status === 201) {
-          setCharacters([...characters, person]);
+          return response.json();
+        }
+      })
+      .then((newUser) => {
+        if (newUser) {
+          setCharacters([...characters, newUser]); 
         }
       })
       .catch((error) => {
-        console.error("Error adding user:", error);
+        console.error(error);
       });
   }
 
@@ -31,7 +55,7 @@ function MyApp() {
   }
 
   function postUser(person) {
-    const promise = fetch("Http://localhost:8000/users", {
+    const promise = fetch("http://localhost:8000/users", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -1,144 +1,97 @@
 // backend.js
 import express from "express";
 import cors from "cors";
+import userServices from "./user-services.js";
 
 const app = express();
 const port = 8000;
-const users = {
-  users_list: [
-    {
-      id: "xyz789",
-      name: "Charlie",
-      job: "Janitor"
-    },
-    {
-      id: "abc123",
-      name: "Mac",
-      job: "Bouncer"
-    },
-    {
-      id: "ppp222",
-      name: "Mac",
-      job: "Professor"
-    },
-    {
-      id: "yat999",
-      name: "Dee",
-      job: "Aspring actress"
-    },
-    {
-      id: "zap555",
-      name: "Dennis",
-      job: "Bartender"
-    }
-  ]
-};
 
-const findUserByName = (name) => {
-  return users["users_list"].filter(
-    (user) => user["name"] === name
-  );
-};
-
-const findUserById = (id) =>
-  users["users_list"].find((user) => user["id"] === id);
-
-const addUser = (user) => {
-  users["users_list"].push(user);
-  return user;
-};
-
-const deleteUser = (id) => {
-  const idx = users["users_list"].findIndex((user) => user["id"] === id);
-
-  if (idx !== -1) {
-    const removedUser = users["users_list"].splice(idx, 1)[0];
-    return removedUser;
-  } else {
-    return null;
-  }
-}
-
-const findUserByNameAndJob = (name, job) => {
-  return users["users_list"].filter(
-    (user) => user["name"] === name && user["job"] === job
-  );
-};
-
-const generateID = () => {
-  const letters = "abcdefghijklmnopqrstuvwxyz";
-  const digits = "0123456789";
-
-  let idLetters = "";
-  for (let i = 0; i < 3; i++) {
-    idLetters += letters.charAt(Math.floor(Math.random() * letters.length));
-  }
-
-  let idNumbers = "";
-  for (let i = 0; i < 3; i++) {
-    idNumbers += digits.charAt(Math.floor(Math.random() * digits.length));
-  }
-
-  return idLetters + idNumbers;
-};
+// const users = {
+//   users_list: [
+//     {
+//       id: "xyz789",
+//       name: "Charlie",
+//       job: "Janitor"
+//     },
+//     {
+//       id: "abc123",
+//       name: "Mac",
+//       job: "Bouncer"
+//     },
+//     {
+//       id: "ppp222",
+//       name: "Mac",
+//       job: "Professor"
+//     },
+//     {
+//       id: "yat999",
+//       name: "Dee",
+//       job: "Aspring actress"
+//     },
+//     {
+//       id: "zap555",
+//       name: "Dennis",
+//       job: "Bartender"
+//     }
+//   ]
+// };
 
 app.use(cors());
 app.use(express.json());
-
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
 
 app.get("/users", (req, res) => {
   const name = req.query.name;
   const job = req.query.job;
 
-  let result;
-
-  if (name !== undefined && job !== undefined) {
-    result = findUserByNameAndJob(name, job);
-  } else if (name !== undefined) {
-    result = findUserByName(name);
-  } else {
-    result = users["users_list"];
-  }
-
-  res.send({ users_list: result });
+  userServices
+    .getUsers(name, job)
+    .then((users) => res.send({ users_list: users }))
+    .catch((error) => {
+      res.status(500).send(error.name);
+    });
 });
 
 app.get("/users/:id", (req, res) => {
-  const id = req.params["id"]; //or req.params.id
-  let result = findUserById(id);
-  if (result === undefined) {
-    res.status(404).send("Resource not found.");
-  } else {
-    res.send(result);
-  }
+  const id = req.params["id"];
+
+  userServices.findUserById(id)
+    .then((result) => {
+      if (result) res.send(result);
+      else res.status(404).send(`Not Found: ${id}`);
+    })
+    .catch((error) => {
+      res.status(500).send(error.name);
+    });
 });
 
 app.post("/users", (req, res) => {
   const userToAdd = req.body;
-  const newID = generateID();
-  const userWithID = {
-    id: newID,
-    name: userToAdd.name,
-    job: userToAdd.job
-  };
-  
-  addUser(userWithID);
-  res.status(201).send(userWithID);
+
+  userServices
+    .addUser(userToAdd)
+    .then((result) => res.status(201).send(result))
+    .catch((error) => {
+      if (error.name === "ValidationError") {
+        res.status(400).send(error.message);
+      } else {
+        res.status(500).send(error.name);
+      }
+    });
 });
+
 
 app.delete("/users/:id", (req, res) => {
   const id = req.params["id"];
-  const removedUser = deleteUser(id);
-
-  if (removedUser === null) {
-    res.status(404).send("Resource not found."); 
-  } else {
-    res.status(204).send(); 
-  }
+  
+  userServices
+    .deleteUserById(id)
+    .then((deletedUser) => {
+      if (!deletedUser) res.status(404).send(`Not Found: ${id}`);
+      else res.status(204).send(); 
+    })
+    .catch((error) => res.status(500).send(error.name));
 });
+
 
 app.listen(port, () => {
   console.log(
